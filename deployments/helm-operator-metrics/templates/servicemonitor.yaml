@@ -1,0 +1,29 @@
+{{- if .Values.serviceMonitor.create }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app: {{ template "helm-operator-metrics.name" . }}
+    chart: {{ template "helm-operator-metrics.chart" . }}
+    release: stakater-monitoring-po
+    heritage: {{ .Release.Service }}
+{{- if .Values.serviceMonitor.additionalLabels }}
+{{- range $key, $value := .Values.serviceMonitor.additionalLabels }}
+    {{ $key }}: {{ $value }}
+{{- end }}
+{{- end }}
+  name: {{ template "helm-operator-metrics.fullname" . }}
+spec:
+  jobLabel: k8s-app
+  endpoints:
+  - interval: {{ .Values.serviceMonitor.interval }}
+    port: http
+    path: /metrics
+    scrapeTimeout: {{ .Values.serviceMonitor.scrapeTimeout }}
+  namespaceSelector:
+    matchNames:
+    - monitoring
+  selector:
+    matchLabels:
+      app: {{ template "helm-operator-metrics.name" . }}
+{{- end }}
