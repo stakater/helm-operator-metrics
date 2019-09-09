@@ -17,4 +17,4 @@ import:
 - package: github.com/prometheus/procfs
   version: v0.0.3
 - package: github.com/weaveworks/flux
-  version: 1.13.3
+  version: 1.14.2

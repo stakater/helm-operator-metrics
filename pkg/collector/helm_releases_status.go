@@ -25,7 +25,7 @@ func init() {
 func helmReleaseStatusInfoCollector(opts *options.Options) (Collector, error) {
 	subsystem := "status"
 	statusInfoLabels := []string{"name", "namespace", "release_status", "release_name"}
-	statusConditionLabels := []string{"name", "namespace", "message", "reason", "status", "type", "transition_time"}
+	statusConditionLabels := []string{"name", "namespace", "message", "reason", "status", "type", "transition_time", "update_time"}
 	return &helmReleaseStatusesCollector{
 		helmReleaseStatusInfoDesc: prometheus.NewDesc(prometheus.BuildFQName(opts.Namespace, subsystem, "info"),
 			"HelmRelease Status information",
@@ -92,7 +92,7 @@ func (c *helmReleaseStatusesCollector) updateMetrics(ch chan<- prometheus.Metric
 			} else {
 				conditionStatusValue = -1
 			}
-			ch <- prometheus.MustNewConstMetric(c.helmReleaseStatusConditionDesc, prometheus.GaugeValue, conditionStatusValue, hr.Name, hr.Namespace, sc.Message, sc.Reason, string(sc.Status), string(sc.Type), sc.LastTransitionTime.String())
+			ch <- prometheus.MustNewConstMetric(c.helmReleaseStatusConditionDesc, prometheus.GaugeValue, conditionStatusValue, hr.Name, hr.Namespace, sc.Message, sc.Reason, string(sc.Status), string(sc.Type), sc.LastTransitionTime.String(), sc.LastUpdateTime.String())
 		}
 	}
 
