@@ -25,7 +25,7 @@ func init() {
 func helmReleaseStatusInfoCollector(opts *options.Options) (Collector, error) {
 	subsystem := "status"
 	statusInfoLabels := []string{"name", "namespace", "release_status", "release_name"}
-	statusConditionLabels := []string{"name", "namespace", "message", "reason", "status", "type"}
+	statusConditionLabels := []string{"name", "namespace", "message", "reason", "status", "type", "transition_time"}
 	return &helmReleaseStatusesCollector{
 		helmReleaseStatusInfoDesc: prometheus.NewDesc(prometheus.BuildFQName(opts.Namespace, subsystem, "info"),
 			"HelmRelease Status information",
@@ -60,11 +60,30 @@ func (c *helmReleaseStatusesCollector) updateMetrics(ch chan<- prometheus.Metric
 
 	for _, hr := range helmreleaseList.Items {
 		var releaseStatusValue float64
-		if hr.Status.ReleaseStatus == "DEPLOYED" {
+
+		switch hr.Status.ReleaseStatus {
+		case "UNKNOWN":
+			releaseStatusValue = 0
+		case "DEPLOYED":
 			releaseStatusValue = 1
-		} else {
+		case "DELETED":
+			releaseStatusValue = 2
+		case "SUPERSEDED":
+			releaseStatusValue = 3
+		case "FAILED":
 			releaseStatusValue = -1
+		case "DELETING":
+			releaseStatusValue = 5
+		case "PENDING_INSTALL":
+			releaseStatusValue = 6
+		case "PENDING_UPGRADE":
+			releaseStatusValue = 7
+		case "PENDING_ROLLBACK":
+			releaseStatusValue = 8
+		default: // invalid helm release status
+			releaseStatusValue = 9
 		}
+
 		ch <- prometheus.MustNewConstMetric(c.helmReleaseStatusInfoDesc, prometheus.GaugeValue, releaseStatusValue, hr.Name, hr.Namespace, hr.Status.ReleaseStatus, hr.Status.ReleaseName)
 		for _, sc := range hr.Status.Conditions {
 			var conditionStatusValue float64
@@ -73,7 +92,7 @@ func (c *helmReleaseStatusesCollector) updateMetrics(ch chan<- prometheus.Metric
 			} else {
 				conditionStatusValue = -1
 			}
-			ch <- prometheus.MustNewConstMetric(c.helmReleaseStatusConditionDesc, prometheus.GaugeValue, conditionStatusValue, hr.Name, hr.Namespace, sc.Message, sc.Reason, string(sc.Status), string(sc.Type))
+			ch <- prometheus.MustNewConstMetric(c.helmReleaseStatusConditionDesc, prometheus.GaugeValue, conditionStatusValue, hr.Name, hr.Namespace, sc.Message, sc.Reason, string(sc.Status), string(sc.Type), sc.LastTransitionTime.String())
 		}
 	}
 
