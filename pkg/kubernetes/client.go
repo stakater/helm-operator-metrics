@@ -79,7 +79,7 @@ func getKubeConfigPath() (string, error) {
 
 	// Mac OS
 	if home != "" {
-		configPath := filepath.Join(home, ".kube", "config.stakater")
+		configPath := filepath.Join(home, ".kube", "config")
 		_, err := os.Stat(configPath)
 		if err == nil {
 			return configPath, nil
