@@ -80,8 +80,8 @@ func (c *helmReleaseStatusesCollector) updateMetrics(ch chan<- prometheus.Metric
 			releaseStatusValue = 7
 		case "PENDING_ROLLBACK":
 			releaseStatusValue = 8
-		default: // invalid helm release status
-			releaseStatusValue = 9
+		default: // invalid / non-existent status
+			releaseStatusValue = -1
 		}
 
 		ch <- prometheus.MustNewConstMetric(c.helmReleaseStatusInfoDesc, prometheus.GaugeValue, releaseStatusValue, hr.Name, hr.Namespace, hr.Status.ReleaseStatus, hr.Status.ReleaseName)
